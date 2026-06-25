@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google OAuth POC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M12 22V12M3 7l9 5 9-5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">OAuth Connect</h1>
+          <p class="brand-subtitle">Authentication POC</p>
+        </div>
+      </div>
+      <nav class="header-nav" id="header-nav" hidden>
+        <span class="header-user" id="header-user"></span>
+      </nav>
+    </header>
+
+    <main class="main">
+      <!-- Loading -->
+      <section class="panel panel-center" id="view-loading">
+        <div class="spinner" aria-label="Loading"></div>
+        <p class="muted">Checking session…</p>
+      </section>
+
+      <!-- Login -->
+      <section class="panel panel-center" id="view-login" hidden>
+        <div class="login-card">
+          <div class="login-badge">POC 1</div>
+          <h2 class="login-title">Sign in to continue</h2>
+          <p class="login-desc">
+            Connect your Google account to authenticate, store tokens securely,
+            and manage connected apps.
+          </p>
+          <a href="/auth/google/login" class="btn-google" id="btn-google-login">
+            <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
+          </a>
+          <ul class="feature-list">
+            <li>OAuth 2.0 Authorization Code Flow</li>
+            <li>Encrypted token storage</li>
+            <li>Audit logging</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Dashboard -->
+      <section class="dashboard" id="view-dashboard" hidden>
+        <div class="alert alert-success" id="alert-success" hidden role="alert"></div>
+
+        <div class="grid">
+          <!-- Profile -->
+          <article class="card">
+            <div class="card-header">
+              <h2>Profile</h2>
+              <span class="badge badge-success">Authenticated</span>
+            </div>
+            <div class="profile">
+              <img class="profile-avatar" id="profile-avatar" src="" alt="" hidden />
+              <div class="profile-avatar profile-avatar-fallback" id="profile-avatar-fallback" aria-hidden="true"></div>
+              <div class="profile-info">
+                <h3 class="profile-name" id="profile-name"></h3>
+                <p class="profile-email" id="profile-email"></p>
+                <p class="profile-meta muted">User ID: <span id="profile-id"></span></p>
+              </div>
+            </div>
+          </article>
+
+          <!-- Connected apps -->
+          <article class="card">
+            <div class="card-header">
+              <h2>Connected Apps</h2>
+              <button type="button" class="btn-icon" id="btn-refresh" title="Refresh">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 4v6h-6M1 20v-6h6"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+              </button>
+            </div>
+            <div class="connected-list" id="connected-list">
+              <p class="muted empty-state">Loading connected apps…</p>
+            </div>
+          </article>
+
+          <!-- Actions -->
+          <article class="card card-wide">
+            <div class="card-header">
+              <h2>Account Actions</h2>
+            </div>
+            <p class="card-desc muted">
+              Disconnecting removes stored OAuth tokens from the database and marks
+              the Google connection as disconnected. Audit logs are preserved.
+            </p>
+            <div class="actions">
+              <button type="button" class="btn btn-danger" id="btn-disconnect">
+                Disconnect Google
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Google OAuth POC · FastAPI · Encrypted tokens · Audit logs</p>
+    </footer>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <!-- Disconnect confirmation modal -->
+  <dialog class="modal" id="modal-disconnect">
+    <form method="dialog" class="modal-content">
+      <h3>Disconnect Google?</h3>
+      <p class="muted">Stored tokens will be deleted. You can reconnect anytime.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="modal-cancel">Cancel</button>
+        <button type="button" class="btn btn-danger" id="modal-confirm">Disconnect</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/static/js/app.js" type="module"></script>
+</body>
+</html>
