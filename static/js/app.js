@@ -1,5 +1,5 @@
 /**
- * Google OAuth POC — frontend application
+ * OAuth Connect POC — frontend application
  * Uses session cookies (same-origin); all API calls include credentials.
  */
 
@@ -22,7 +22,6 @@ const els = {
   profileId: $("profile-id"),
   connectedList: $("connected-list"),
   btnRefresh: $("btn-refresh"),
-  btnDisconnect: $("btn-disconnect"),
   modalDisconnect: $("modal-disconnect"),
   modalCancel: $("modal-cancel"),
   modalConfirm: $("modal-confirm"),
@@ -31,6 +30,9 @@ const els = {
 
 /** @type {object|null} */
 let currentUser = null;
+let providerToDisconnect = null;
+
+const ALL_PROVIDERS = ["google", "microsoft", "linkedin", "zoom"];
 
 function showView(name) {
   Object.entries(views).forEach(([key, el]) => {
@@ -117,34 +119,66 @@ function renderProfile(user) {
 }
 
 function renderConnectedApps(apps) {
-  if (!apps.length) {
-    els.connectedList.innerHTML =
-      '<p class="muted empty-state">No connected apps found.</p>';
-    return;
-  }
+  els.connectedList.innerHTML = ALL_PROVIDERS
+    .map((provider) => {
+      const app = apps.find((a) => a.provider.toLowerCase() === provider);
+      const isConnected = app && app.status === "connected";
+      const providerDisplayName = provider.charAt(0).toUpperCase() + provider.slice(1);
 
-  els.connectedList.innerHTML = apps
-    .map(
-      (app) => `
-    <div class="connected-item">
-      <div>
-        <div class="connected-provider">
-          <span class="provider-dot ${app.status === "connected" ? "" : "disconnected"}"></span>
-          ${app.provider}
-        </div>
-        <div class="connected-meta">
-          Scopes: ${app.scopes || "—"}<br />
-          Connected: ${formatDate(app.connected_at)}
-        </div>
-      </div>
-      <span class="badge badge-${app.status === "connected" ? "connected" : "disconnected"}">
-        ${app.status}
-      </span>
-    </div>
-  `
-    )
+      if (isConnected) {
+        return `
+          <div class="connected-item">
+            <div>
+              <div class="connected-provider">
+                <span class="provider-dot"></span>
+                ${providerDisplayName}
+              </div>
+              <div class="connected-meta">
+                Scopes: ${app.scopes || "—"}<br />
+                Connected: ${formatDate(app.connected_at)}
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <span class="badge badge-connected">Connected</span>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="confirmDisconnect('${provider}')" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">
+                Disconnect
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        const isFailed = app && (app.status === "expired" || app.status === "failed");
+        const statusText = isFailed ? app.status : "Not Connected";
+        return `
+          <div class="connected-item" style="opacity: 0.85;">
+            <div>
+              <div class="connected-provider">
+                <span class="provider-dot disconnected"></span>
+                ${providerDisplayName}
+              </div>
+              <div class="connected-meta">
+                Status: <span style="text-transform: capitalize; font-weight: 500;">${statusText}</span>
+              </div>
+            </div>
+            <a href="/auth/${provider}/login" class="btn btn-secondary" style="padding: 0.3rem 0.75rem; font-size: 0.8rem; text-decoration: none;">
+              ${isFailed ? "Reconnect" : "Connect"}
+            </a>
+          </div>
+        `;
+      }
+    })
     .join("");
 }
+
+// Expose confirmDisconnect globally so inline button click handlers work (module scope workaround)
+window.confirmDisconnect = function (provider) {
+  providerToDisconnect = provider;
+  const titleEl = $("modal-disconnect-title");
+  if (titleEl) {
+    titleEl.textContent = `Disconnect ${provider.charAt(0).toUpperCase() + provider.slice(1)}?`;
+  }
+  els.modalDisconnect.showModal();
+};
 
 async function loadConnectedApps() {
   els.btnRefresh.disabled = true;
@@ -171,21 +205,19 @@ async function loadDashboard() {
   }
 }
 
-async function disconnectGoogle() {
-  els.btnDisconnect.disabled = true;
+async function disconnectProvider() {
+  if (!providerToDisconnect) return;
   els.modalConfirm.disabled = true;
 
   try {
-    await api("/disconnect/google", { method: "POST" });
+    await api(`/disconnect/${providerToDisconnect}`, { method: "POST" });
     els.modalDisconnect.close();
-    showToast("Google account disconnected");
-    currentUser = null;
-    els.headerNav.hidden = true;
-    showView("login");
+    showToast(`${providerToDisconnect.charAt(0).toUpperCase() + providerToDisconnect.slice(1)} account disconnected`);
+    providerToDisconnect = null;
+    await loadDashboard();
   } catch (err) {
     showToast(err.message, "error");
   } finally {
-    els.btnDisconnect.disabled = false;
     els.modalConfirm.disabled = false;
   }
 }
@@ -195,7 +227,7 @@ function handleUrlParams() {
 
   if (params.get("login") === "success") {
     els.alertSuccess.hidden = false;
-    els.alertSuccess.textContent = "Successfully signed in with Google!";
+    els.alertSuccess.textContent = "Successfully authenticated!";
     showToast("Welcome back!");
   }
 
@@ -213,15 +245,11 @@ function handleUrlParams() {
 function bindEvents() {
   els.btnRefresh.addEventListener("click", loadConnectedApps);
 
-  els.btnDisconnect.addEventListener("click", () => {
-    els.modalDisconnect.showModal();
-  });
-
   els.modalCancel.addEventListener("click", () => {
     els.modalDisconnect.close();
   });
 
-  els.modalConfirm.addEventListener("click", disconnectGoogle);
+  els.modalConfirm.addEventListener("click", disconnectProvider);
 
   els.modalDisconnect.addEventListener("click", (e) => {
     if (e.target === els.modalDisconnect) {

@@ -29,6 +29,31 @@ class Settings(BaseSettings):
     secret_key: str
     fernet_key: str
 
+    # Microsoft settings
+    microsoft_client_id: str | None = None
+    microsoft_client_secret: str | None = None
+    microsoft_authorize_url: str = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+    microsoft_token_url: str = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+    microsoft_userinfo_url: str = "https://graph.microsoft.com/v1.0/me"
+    microsoft_scopes: str = "openid email profile User.Read"
+
+    # LinkedIn settings (OIDC flow)
+    linkedin_client_id: str | None = None
+    linkedin_client_secret: str | None = None
+    linkedin_authorize_url: str = "https://www.linkedin.com/oauth/v2/authorization"
+    linkedin_token_url: str = "https://www.linkedin.com/oauth/v2/accessToken"
+    linkedin_userinfo_url: str = "https://api.linkedin.com/v2/userinfo"
+    linkedin_scopes: str = "openid profile email"
+
+    # Zoom settings
+    zoom_client_id: str | None = None
+    zoom_client_secret: str | None = None
+    zoom_authorize_url: str = "https://zoom.us/oauth/authorize"
+    zoom_token_url: str = "https://zoom.us/oauth/token"
+    zoom_userinfo_url: str = "https://api.zoom.us/v2/users/me"
+    zoom_scopes: str = "user:read:user"
+    zoom_redirect_uri: str | None = None
+
     # Google OAuth endpoints (OpenID Connect discovery)
     google_authorize_url: str = "https://accounts.google.com/o/oauth2/v2/auth"
     google_token_url: str = "https://oauth2.googleapis.com/token"
