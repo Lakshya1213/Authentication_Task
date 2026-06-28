@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/css/styles.css" />
+  <link rel="stylesheet" href="/static/css/styles.css?v=1.2" />
 </head>
 <body>
   <div class="app">
@@ -30,78 +30,72 @@
     </header>
 
     <main class="main">
-      <!-- Loading -->
-      <section class="panel panel-center" id="view-loading">
-        <div class="spinner" aria-label="Loading"></div>
-        <p class="muted">Checking session…</p>
-      </section>
+      <!-- Success/Error alert top -->
+      <div class="alert alert-success" id="alert-success" hidden></div>
 
-      <!-- Login -->
-      <section class="panel panel-center" id="view-login" hidden>
-        <div class="login-card">
-          <div class="login-badge">POC 1</div>
+      <!-- View: Loading -->
+      <div id="view-loading" class="panel-center">
+        <div class="spinner" aria-label="Loading page content"></div>
+      </div>
+
+      <!-- View: Login -->
+      <div id="view-login" class="panel-center" hidden>
+        <article class="login-card">
+          <span class="login-badge">POC 1</span>
           <h2 class="login-title">Sign in to continue</h2>
-          <p class="login-desc">
-            Connect an enterprise identity provider to authenticate, store tokens securely,
-            and manage connected apps.
-          </p>
-          <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%; margin-bottom: 1.5rem;">
-            <a href="/auth/google/login" class="btn-provider" id="btn-google-login">
-              <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true" style="width:20px; height:20px;">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          <p class="login-desc">Connect with your identity provider to access the integration dashboard.</p>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+            <a href="/auth/google/login" class="btn-google">
+              <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
               </svg>
               Continue with Google
             </a>
-            <a href="/auth/microsoft/login" class="btn-provider" id="btn-microsoft-login">
-              <svg viewBox="0 0 23 23" style="width:20px; height:20px;" aria-hidden="true">
-                <path fill="#f35325" d="M1 1h10v10H1z"/>
-                <path fill="#81bc06" d="M12 1h10v10H12z"/>
-                <path fill="#05a6f0" d="M1 12h10v10H1z"/>
-                <path fill="#ffba08" d="M12 12h10v10H12z"/>
+            <a href="/auth/microsoft/login" class="btn-provider">
+              <svg class="provider-icon" viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 0h11v11H0z" fill="#F25022"/><path d="M12 0h11v11H12z" fill="#7FBA00"/><path d="M0 12h11v11H0z" fill="#00A4EF"/><path d="M12 12h11v11H12z" fill="#FFB900"/>
               </svg>
               Continue with Microsoft
             </a>
           </div>
           <ul class="feature-list">
-            <li>OAuth 2.0 Authorization Code Flow</li>
-            <li>Encrypted token storage</li>
-            <li>Audit logging</li>
+            <li>Secure session-based OAuth authentication</li>
+            <li>Token encryption at rest</li>
+            <li>Detailed user profile synchronization</li>
           </ul>
-        </div>
-      </section>
+        </article>
+      </div>
 
-      <!-- Dashboard -->
-      <section class="dashboard" id="view-dashboard" hidden>
-        <div class="alert alert-success" id="alert-success" hidden role="alert"></div>
-
-        <div class="grid">
-          <!-- Profile -->
+      <!-- View: Dashboard -->
+      <div id="view-dashboard" class="dashboard" hidden>
+        <section class="grid">
+          
+          <!-- Profile Card -->
           <article class="card">
             <div class="card-header">
               <h2>Profile</h2>
               <span class="badge badge-success">Authenticated</span>
             </div>
             <div class="profile">
-              <img class="profile-avatar" id="profile-avatar" src="" alt="" hidden />
-              <div class="profile-avatar profile-avatar-fallback" id="profile-avatar-fallback" aria-hidden="true"></div>
-              <div class="profile-info">
-                <h3 class="profile-name" id="profile-name"></h3>
-                <p class="profile-email" id="profile-email"></p>
-                <p class="profile-meta muted">User ID: <span id="profile-id"></span></p>
+              <img class="profile-avatar" id="profile-avatar" src="" alt="Avatar" hidden />
+              <div class="profile-avatar profile-avatar-fallback" id="profile-avatar-fallback" hidden>?</div>
+              <div>
+                <h3 class="profile-name" id="profile-name">—</h3>
+                <p class="profile-email" id="profile-email">—</p>
+                <p class="profile-meta muted">User ID: <span id="profile-id">—</span></p>
               </div>
             </div>
           </article>
 
-          <!-- Connected apps -->
+          <!-- Connected Apps Card -->
           <article class="card">
             <div class="card-header">
               <h2>Connected Apps</h2>
-              <button type="button" class="btn-icon" id="btn-refresh" title="Refresh">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M23 4v6h-6M1 20v-6h6"/>
+              <button type="button" class="btn-icon" id="btn-refresh" aria-label="Refresh list">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
                 </svg>
               </button>
@@ -111,9 +105,135 @@
             </div>
           </article>
 
+          <!-- Calendar Integration Test -->
+          <article class="card card-wide calendar-card">
+            <div class="card-header">
+              <div class="calendar-title-group">
+                <div class="calendar-icon-badge">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 4H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z" fill="currentColor"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2>Google Calendar Integration</h2>
+                  <p class="muted card-desc">Sync, search, and view your schedule dynamically</p>
+                </div>
+              </div>
+            </div>
 
-        </div>
-      </section>
+            <div class="calendar-tabs">
+              <button type="button" class="tab-btn active" id="tab-btn-view">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="tab-icon" style="width:16px; height:16px; margin-right:4px;"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/></svg>
+                View & Search
+              </button>
+              <button type="button" class="tab-btn" id="tab-btn-create">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="tab-icon" style="width:16px; height:16px; margin-right:4px;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/></svg>
+                Create Event
+              </button>
+            </div>
+
+            <!-- View Events Section -->
+            <div id="section-cal-view">
+              <div class="calendar-chat-container">
+                <div class="chat-input-wrapper">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="chat-input-icon">
+                    <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z" fill="currentColor"/>
+                  </svg>
+                  <input type="text" id="cal-chat-input" class="chat-control" placeholder="Ask AI: 'what are my events tomorrow?' or 'create meeting tomorrow at 3pm called Team Sync'" />
+                  <button type="button" class="btn btn-chat-submit" id="btn-chat-submit">Ask AI</button>
+                </div>
+              </div>
+
+              <div class="calendar-form-container">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label for="cal-start">
+                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="label-icon"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm3.3 14.3L11 11.5V6h2v4.7l3.7 2.2-1.4 1.4z" fill="currentColor"/></svg>
+                      Start Date & Time
+                    </label>
+                    <input type="datetime-local" id="cal-start" class="form-control" />
+                  </div>
+                  <div class="form-group">
+                    <label for="cal-end">
+                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="label-icon"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm3.3 14.3L11 11.5V6h2v4.7l3.7 2.2-1.4 1.4z" fill="currentColor"/></svg>
+                      End Date & Time
+                    </label>
+                    <input type="datetime-local" id="cal-end" class="form-control" />
+                  </div>
+                  <div class="form-group query-group">
+                    <label for="cal-query">
+                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="label-icon"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="currentColor"/></svg>
+                      Filter by Keywords (Optional)
+                    </label>
+                    <input type="text" id="cal-query" class="form-control" placeholder="E.g., meeting, sync, design..." />
+                  </div>
+                </div>
+                <div class="calendar-actions">
+                  <button type="button" class="btn btn-primary-gradient" id="btn-cal-fetch">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="btn-icon-svg" style="width: 16px; height: 16px; margin-right: 4px;"><path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6a5.87 5.87 0 0 1-2.8-.7l-1.46 1.46A8.954 8.954 0 0 0 12 20c4.97 0 9-4.03 9-9h3l-4-3zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46A8.954 8.954 0 0 0 12 4c-4.97 0-9 4.03-9 9H0l4 4 4-4H5z" fill="currentColor"/></svg>
+                    Sync Events
+                  </button>
+                  <button type="button" class="btn btn-secondary-modern" id="btn-cal-search">
+                    Search
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Create Event Section -->
+            <div id="section-cal-create" hidden>
+              <div class="calendar-form-container">
+                <div class="form-grid-create">
+                  <div class="form-group full-width">
+                    <label for="create-title">Event Title</label>
+                    <input type="text" id="create-title" class="form-control" placeholder="E.g., Team Weekly Sync" />
+                  </div>
+                  <div class="form-group">
+                    <label for="create-start">Start Date & Time</label>
+                    <input type="datetime-local" id="create-start" class="form-control" />
+                  </div>
+                  <div class="form-group">
+                    <label for="create-end">End Date & Time</label>
+                    <input type="datetime-local" id="create-end" class="form-control" />
+                  </div>
+                  <div class="form-group full-width">
+                    <label for="create-location">Location (Optional)</label>
+                    <input type="text" id="create-location" class="form-control" placeholder="E.g., Conference Room A, Google Meet..." />
+                  </div>
+                  <div class="form-group full-width">
+                    <label for="create-description">Description (Optional)</label>
+                    <textarea id="create-description" class="form-control" rows="3" placeholder="E.g., Review weekly progress and milestones..." style="height: auto; min-height: 80px;"></textarea>
+                  </div>
+                </div>
+                <div class="calendar-actions" style="margin-top: 1.25rem;">
+                  <button type="button" class="btn btn-primary-gradient" id="btn-cal-create-submit">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="btn-icon-svg" style="width: 16px; height: 16px; margin-right: 4px;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/></svg>
+                    Create Event
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="calendar-divider"></div>
+
+            <div class="events-list-wrapper">
+              <div class="events-list-header">
+                <h3>Calendar Events</h3>
+                <span class="events-count" id="events-count" style="display: none;">0 events</span>
+              </div>
+              <div class="events-list" id="events-list">
+                <div class="empty-state-container">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="empty-state-icon">
+                    <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v2h-5v-2z" fill="currentColor"/>
+                  </svg>
+                  <p class="muted empty-state-text">Select a time range and click Sync Events to pull your schedule.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+        </section>
+      </div>
     </main>
 
     <footer class="footer">
@@ -136,6 +256,56 @@
     </form>
   </dialog>
 
-  <script src="/static/js/app.js" type="module"></script>
+  <!-- Calendar Event Detail modal -->
+  <dialog class="modal" id="modal-event-detail" style="max-width: 500px;">
+    <div class="modal-content">
+      <h3 id="event-detail-title">(No Title)</h3>
+      
+      <div class="detail-section">
+        <div class="detail-label">Time</div>
+        <div class="detail-value" id="event-detail-time">—</div>
+      </div>
+      
+      <div class="detail-section">
+        <div class="detail-label">Location</div>
+        <div class="detail-value" id="event-detail-location">—</div>
+      </div>
+      
+      <div class="detail-section">
+        <div class="detail-label">Description</div>
+        <div class="detail-value" id="event-detail-description" style="white-space: pre-wrap;">—</div>
+      </div>
+      
+      <div class="detail-section">
+        <div class="detail-label">Organizer</div>
+        <div class="detail-value" id="event-detail-organizer">—</div>
+      </div>
+      
+      <div class="detail-section">
+        <div class="detail-label">Attendees</div>
+        <div class="attendee-list" id="event-detail-attendees">
+          <p class="muted" style="margin: 0; font-size: 0.85rem;">No attendees.</p>
+        </div>
+      </div>
+
+      <div class="detail-section" id="event-detail-link-section" hidden>
+        <div class="detail-label">Meeting Link</div>
+        <div class="detail-value">
+          <a id="event-detail-link" href="#" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;">
+              <path d="M15 10l5 5-5 5M4 4v7a4 4 0 004 4h12"/>
+            </svg>
+            Join Meeting
+          </a>
+        </div>
+      </div>
+      
+      <div class="modal-actions" style="margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" id="btn-event-detail-close">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="/static/js/app.js?v=1.3" type="module"></script>
 </body>
 </html>

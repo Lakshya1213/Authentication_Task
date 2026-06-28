@@ -62,8 +62,8 @@ class Settings(BaseSettings):
     # Fallback default; login/callback derive the URI dynamically from the request host
     google_redirect_uri: str = "http://127.0.0.1:8000/auth/google/callback"
 
-    # Basic profile scopes for POC — no Calendar/Gmail/etc.
-    google_scopes: str = "openid email profile"
+    # Scopes for POC — includes Google Calendar read/write access
+    google_scopes: str = "openid email profile https://www.googleapis.com/auth/calendar"
 
     app_name: str = "Google OAuth POC"
     debug: bool = True
