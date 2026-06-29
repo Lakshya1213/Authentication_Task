@@ -3,6 +3,11 @@
  * Uses session cookies (same-origin); all API calls include credentials.
  */
 
+window.onerror = function(message, source, lineno, colno, error) {
+  alert("JS Error: " + message + " at line " + lineno + ":" + colno);
+  return false;
+};
+
 const $ = (id) => document.getElementById(id);
 
 const views = {
@@ -55,11 +60,46 @@ const els = {
   createLocation: $("create-location"),
   createDescription: $("create-description"),
   btnCalCreateSubmit: $("btn-cal-create-submit"),
+  // Mail elements
+  mailQuery: $("mail-query"),
+  mailLimit: $("mail-limit"),
+  btnMailSearch: $("btn-mail-search"),
+  mailList: $("mail-list"),
+  mailCount: $("mail-count"),
+  mailChatInput: $("mail-chat-input"),
+  btnMailChatSubmit: $("btn-mail-chat-submit"),
+  tabBtnMailView: $("tab-btn-mail-view"),
+  tabBtnMailCreate: $("tab-btn-mail-create"),
+  sectionMailView: $("section-mail-view"),
+  sectionMailCreate: $("section-mail-create"),
+  mailCreateTo: $("mail-create-to"),
+  mailCreateCc: $("mail-create-cc"),
+  mailCreateSubject: $("mail-create-subject"),
+  mailCreateBody: $("mail-create-body"),
+  btnMailDraftSubmit: $("btn-mail-draft-submit"),
+  btnMailSendSubmit: $("btn-mail-send-submit"),
+  modalMailDetail: $("modal-mail-detail"),
+  mailDetailSubject: $("mail-detail-subject"),
+  mailDetailFrom: $("mail-detail-from"),
+  mailDetailTo: $("mail-detail-to"),
+  mailDetailDate: $("mail-detail-date"),
+  mailDetailBody: $("mail-detail-body"),
+  mailReplyBody: $("mail-reply-body"),
+  btnMailReplySubmit: $("btn-mail-reply-submit"),
+  btnMailDetailClose: $("btn-mail-detail-close"),
+  modalMailConfirm: $("modal-mail-confirm"),
+  mailConfirmTo: $("mail-confirm-to"),
+  mailConfirmSubject: $("mail-confirm-subject"),
+  btnMailConfirmCancel: $("btn-mail-confirm-cancel"),
+  btnMailConfirmSend: $("btn-mail-confirm-send"),
 };
 
 /** @type {object|null} */
 let currentUser = null;
 let providerToDisconnect = null;
+let currentViewingMessageId = null;
+let currentConfirmingDraftId = null;
+let composeDataPendingSend = null;
 
 const ALL_PROVIDERS = ["google", "microsoft", "linkedin", "zoom"];
 
@@ -214,6 +254,11 @@ async function loadConnectedApps() {
   try {
     const apps = await api("/connected-apps");
     renderConnectedApps(apps);
+    
+    const googleConnected = apps.some(a => a.provider.toLowerCase() === "google" && a.status === "connected");
+    if (googleConnected) {
+      fetchEmails();
+    }
   } catch (err) {
     els.connectedList.innerHTML = `<p class="muted empty-state">${err.message}</p>`;
   } finally {
@@ -367,6 +412,300 @@ async function submitManualEvent() {
     showToast(err.message || "Failed to create event", "error");
   } finally {
     els.btnCalCreateSubmit.disabled = false;
+  }
+}
+
+async function fetchEmails() {
+  const query = els.mailQuery.value || "";
+  const limit = els.mailLimit.value || 10;
+
+  els.btnMailSearch.disabled = true;
+  els.mailList.innerHTML = `<div class="spinner" style="margin: 2rem auto;"></div>`;
+
+  try {
+    const url = `/api/mail/search?query=${encodeURIComponent(query)}&limit=${encodeURIComponent(limit)}&provider=gmail`;
+    const emails = await api(url);
+    renderEmails(emails);
+  } catch (err) {
+    els.mailList.innerHTML = `<p class="muted empty-state" style="color: var(--danger);">${err.message}</p>`;
+  } finally {
+    els.btnMailSearch.disabled = false;
+  }
+}
+
+async function fetchEmailsWithChat() {
+  const query = els.mailChatInput.value.trim ? els.mailChatInput.value.trim() : els.mailChatInput.value;
+  if (!query) {
+    showToast("Please enter a query first", "error");
+    return;
+  }
+
+  els.btnMailChatSubmit.disabled = true;
+  els.mailList.innerHTML = `<div class="spinner" style="margin: 2rem auto;"></div>`;
+
+  try {
+    const data = await api(`/api/mail/query?q=${encodeURIComponent(query)}`);
+    
+    if (data.action === "search") {
+      els.mailQuery.value = data.query || "";
+      renderEmails(data.emails);
+      return;
+    }
+
+    if (data.action === "draft_created") {
+      showToast(data.message || "Email draft created successfully!", "success");
+      els.mailChatInput.value = "";
+      fetchEmails();
+      return;
+    }
+
+    if (data.action === "confirmation_required") {
+      showToast("Confirmation Required to send this email.", "warning");
+      currentConfirmingDraftId = data.draft_id;
+      
+      els.mailConfirmTo.textContent = data.details.to;
+      els.mailConfirmSubject.textContent = data.details.subject;
+      els.modalMailConfirm.showModal();
+      
+      els.mailChatInput.value = "";
+      fetchEmails();
+      return;
+    }
+  } catch (err) {
+    els.mailList.innerHTML = `<p class="muted empty-state" style="color: var(--danger);">${err.message}</p>`;
+  } finally {
+    els.btnMailChatSubmit.disabled = false;
+  }
+}
+
+function renderEmails(emails) {
+  const countEl = els.mailCount;
+  if (countEl) {
+    if (emails && emails.length > 0) {
+      countEl.textContent = `${emails.length} email${emails.length === 1 ? '' : 's'}`;
+      countEl.style.display = "inline-block";
+    } else {
+      countEl.style.display = "none";
+    }
+  }
+
+  if (!emails || emails.length === 0) {
+    els.mailList.innerHTML = `
+      <div class="empty-state-container">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="empty-state-icon">
+          <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="currentColor"/>
+        </svg>
+        <p class="muted empty-state-text">No emails found.</p>
+      </div>
+    `;
+    return;
+  }
+
+  els.mailList.innerHTML = emails
+    .map((mail) => {
+      const dateStr = new Date(mail.received_at).toLocaleString();
+      const subject = mail.subject || "(No Subject)";
+      const fromName = mail.from ? (mail.from.name || mail.from.email) : "Unknown";
+      const attachmentIcon = mail.has_attachments 
+        ? `<span class="badge badge-secondary" style="font-size: 0.7rem; padding: 0.1rem 0.3rem; margin-left: 0.5rem; display: inline-flex; align-items: center; gap: 0.1rem;">
+             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px; height:10px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+             Attachment
+           </span>`
+        : "";
+        
+      return `
+        <div class="event-item">
+          <div class="event-info" style="max-width: 75%;">
+            <div class="event-title" style="display: flex; align-items: center; font-weight: 500;">
+              ${escapeHtml(subject)}
+              ${attachmentIcon}
+            </div>
+            <div class="event-time">From: ${escapeHtml(fromName)} | ${dateStr}</div>
+            <p class="muted" style="margin: 0.25rem 0 0 0; font-size: 0.8rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+              ${escapeHtml(mail.snippet || "")}
+            </p>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="viewMailDetails('${mail.message_id}')" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">
+            Read Mail
+          </button>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+window.viewMailDetails = async function(messageId) {
+  try {
+    const mail = await api(`/api/mail/read?message_id=${messageId}&provider=gmail`);
+    showMailDetailsModal(mail);
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+};
+
+function showMailDetailsModal(mail) {
+  currentViewingMessageId = mail.message_id;
+  
+  els.mailDetailSubject.textContent = mail.subject || "(No Subject)";
+  els.mailDetailFrom.textContent = mail.from ? `${mail.from.name || ""} <${mail.from.email}>` : "—";
+  
+  const toList = mail.to || [];
+  els.mailDetailTo.textContent = toList.map(t => `${t.name || ""} <${t.email}>`).join(", ") || "—";
+  
+  els.mailDetailDate.textContent = new Date(mail.received_at).toLocaleString();
+  els.mailDetailBody.textContent = mail.body_text || "—";
+  
+  els.mailReplyBody.value = "";
+  els.modalMailDetail.showModal();
+}
+
+async function submitMailReply() {
+  const body = els.mailReplyBody.value.trim();
+  if (!body) {
+    showToast("Reply content cannot be empty", "error");
+    return;
+  }
+
+  els.btnMailReplySubmit.disabled = true;
+
+  try {
+    const payload = {
+      message_id: currentViewingMessageId,
+      body,
+      provider: "gmail"
+    };
+
+    const res = await api("/api/mail/reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.status === "blocked") {
+      showToast(res.message || "Sending blocked due to safety policy", "error");
+    } else {
+      showToast("Reply draft saved successfully!", "success");
+      els.mailReplyBody.value = "";
+      els.modalMailDetail.close();
+      fetchEmails();
+    }
+  } catch (err) {
+    showToast(err.message || "Failed to create reply draft", "error");
+  } finally {
+    els.btnMailReplySubmit.disabled = false;
+  }
+}
+
+async function submitMailDraft() {
+  const to = els.mailCreateTo.value.trim();
+  const cc = els.mailCreateCc.value.trim();
+  const subject = els.mailCreateSubject.value.trim();
+  const body = els.mailCreateBody.value.trim();
+
+  if (!to) {
+    showToast("Recipient is required", "error");
+    return;
+  }
+
+  els.btnMailDraftSubmit.disabled = true;
+
+  try {
+    const payload = {
+      to,
+      cc: cc || null,
+      subject: subject || "(No Subject)",
+      body: body || "",
+      provider: "gmail"
+    };
+
+    await api("/api/mail/draft", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    showToast("Email draft saved successfully!", "success");
+    resetMailComposeForm();
+    els.tabBtnMailView.click();
+    fetchEmails();
+  } catch (err) {
+    showToast(err.message || "Failed to save draft", "error");
+  } finally {
+    els.btnMailDraftSubmit.disabled = false;
+  }
+}
+
+function resetMailComposeForm() {
+  els.mailCreateTo.value = "";
+  els.mailCreateCc.value = "";
+  els.mailCreateSubject.value = "";
+  els.mailCreateBody.value = "";
+  composeDataPendingSend = null;
+  currentConfirmingDraftId = null;
+}
+
+function initiateMailSend() {
+  const to = els.mailCreateTo.value.trim();
+  const cc = els.mailCreateCc.value.trim();
+  const subject = els.mailCreateSubject.value.trim();
+  const body = els.mailCreateBody.value.trim();
+
+  if (!to) {
+    showToast("Recipient is required", "error");
+    return;
+  }
+
+  composeDataPendingSend = {
+    to,
+    cc: cc || null,
+    subject: subject || "(No Subject)",
+    body: body || "",
+    provider: "gmail",
+    confirmation_required: false
+  };
+
+  els.mailConfirmTo.textContent = to + (cc ? ` (CC: ${cc})` : "");
+  els.mailConfirmSubject.textContent = subject || "(No Subject)";
+  els.modalMailConfirm.showModal();
+}
+
+async function confirmAndSendMail() {
+  els.btnMailConfirmSend.disabled = true;
+
+  try {
+    let res;
+    if (currentConfirmingDraftId) {
+      res = await api("/api/mail/send-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draft_id: currentConfirmingDraftId,
+          provider: "gmail"
+        })
+      });
+    } else if (composeDataPendingSend) {
+      res = await api("/api/mail/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(composeDataPendingSend)
+      });
+    }
+
+    if (res && res.status === "blocked") {
+      showToast(res.message || "Sending blocked due to safety policy", "error");
+    } else {
+      showToast(res.message || "Email sent successfully!", "success");
+      resetMailComposeForm();
+      els.modalMailConfirm.close();
+      els.tabBtnMailView.click();
+      fetchEmails();
+    }
+  } catch (err) {
+    showToast(err.message || "Failed to send email", "error");
+  } finally {
+    els.btnMailConfirmSend.disabled = false;
+    currentConfirmingDraftId = null;
+    composeDataPendingSend = null;
   }
 }
 
@@ -538,6 +877,57 @@ function bindEvents() {
   els.modalEventDetail.addEventListener("click", (e) => {
     if (e.target === els.modalEventDetail) {
       els.modalEventDetail.close();
+    }
+  });
+
+  // Mail event binds
+  els.btnMailSearch.addEventListener("click", fetchEmails);
+  els.btnMailChatSubmit.addEventListener("click", fetchEmailsWithChat);
+  els.mailChatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      fetchEmailsWithChat();
+    }
+  });
+
+  // Mail tab switching binds
+  els.tabBtnMailView.addEventListener("click", () => {
+    els.tabBtnMailView.classList.add("active");
+    els.tabBtnMailCreate.classList.remove("active");
+    els.sectionMailView.hidden = false;
+    els.sectionMailCreate.hidden = true;
+  });
+
+  els.tabBtnMailCreate.addEventListener("click", () => {
+    els.tabBtnMailCreate.classList.add("active");
+    els.tabBtnMailView.classList.remove("active");
+    els.sectionMailCreate.hidden = false;
+    els.sectionMailView.hidden = true;
+  });
+
+  els.btnMailDraftSubmit.addEventListener("click", submitMailDraft);
+  els.btnMailSendSubmit.addEventListener("click", initiateMailSend);
+  els.btnMailReplySubmit.addEventListener("click", submitMailReply);
+  
+  els.btnMailDetailClose.addEventListener("click", () => els.modalMailDetail.close());
+  els.modalMailDetail.addEventListener("click", (e) => {
+    if (e.target === els.modalMailDetail) {
+      els.modalMailDetail.close();
+    }
+  });
+
+  els.btnMailConfirmCancel.addEventListener("click", () => {
+    els.modalMailConfirm.close();
+    currentConfirmingDraftId = null;
+    composeDataPendingSend = null;
+  });
+  
+  els.btnMailConfirmSend.addEventListener("click", confirmAndSendMail);
+  
+  els.modalMailConfirm.addEventListener("click", (e) => {
+    if (e.target === els.modalMailConfirm) {
+      els.modalMailConfirm.close();
+      currentConfirmingDraftId = null;
+      composeDataPendingSend = null;
     }
   });
 }

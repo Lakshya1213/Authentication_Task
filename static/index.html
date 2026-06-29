@@ -231,6 +231,117 @@
               </div>
             </div>
           </article>
+          
+          <!-- Gmail Integration Card -->
+          <article class="card card-wide calendar-card" id="gmail-card">
+            <div class="card-header">
+              <div class="calendar-title-group">
+                <div class="calendar-icon-badge" style="background: #feeded; color: #ea4335;">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;">
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="currentColor"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2>Gmail Integration</h2>
+                  <p class="muted card-desc">Read, compose, search, and reply to emails securely</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="calendar-tabs">
+              <button type="button" class="tab-btn active" id="tab-btn-mail-view">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="tab-icon" style="width:16px; height:16px; margin-right:4px;"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/></svg>
+                Search & Read
+              </button>
+              <button type="button" class="tab-btn" id="tab-btn-mail-create">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="tab-icon" style="width:16px; height:16px; margin-right:4px;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>
+                Compose Email
+              </button>
+            </div>
+
+            <!-- View Mail Section -->
+            <div id="section-mail-view">
+              <div class="calendar-chat-container">
+                <div class="chat-input-wrapper">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="chat-input-icon">
+                    <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z" fill="currentColor"/>
+                  </svg>
+                  <input type="text" id="mail-chat-input" class="chat-control" placeholder="Ask AI: 'find emails about pricing' or 'draft email to test@example.com with subject Quote'" />
+                  <button type="button" class="btn btn-chat-submit" id="btn-mail-chat-submit">Ask AI</button>
+                </div>
+              </div>
+
+              <div class="calendar-form-container">
+                <div class="form-grid">
+                  <div class="form-group query-group" style="grid-column: span 2;">
+                    <label for="mail-query">
+                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="label-icon"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="currentColor"/></svg>
+                      Search Query
+                    </label>
+                    <input type="text" id="mail-query" class="form-control" placeholder="E.g., from:customer@example.com, pricing, subject:weekly..." />
+                  </div>
+                  <div class="form-group">
+                    <label for="mail-limit">Limit</label>
+                    <input type="number" id="mail-limit" class="form-control" value="10" min="1" max="50" />
+                  </div>
+                </div>
+                <div class="calendar-actions">
+                  <button type="button" class="btn btn-primary-gradient" id="btn-mail-search">
+                    Search Emails
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Compose Email Section -->
+            <div id="section-mail-create" hidden>
+              <div class="calendar-form-container">
+                <div class="form-grid-create">
+                  <div class="form-group">
+                    <label for="mail-create-to">To (Recipient)</label>
+                    <input type="email" id="mail-create-to" class="form-control" placeholder="E.g., client@example.com" />
+                  </div>
+                  <div class="form-group">
+                    <label for="mail-create-cc">CC (Optional)</label>
+                    <input type="text" id="mail-create-cc" class="form-control" placeholder="E.g., team@example.com" />
+                  </div>
+                  <div class="form-group full-width">
+                    <label for="mail-create-subject">Subject</label>
+                    <input type="text" id="mail-create-subject" class="form-control" placeholder="E.g., Proposal follow-up" />
+                  </div>
+                  <div class="form-group full-width">
+                    <label for="mail-create-body">Message Body</label>
+                    <textarea id="mail-create-body" class="form-control" rows="6" placeholder="Write your email here..." style="height: auto; min-height: 120px;"></textarea>
+                  </div>
+                </div>
+                <div class="calendar-actions" style="margin-top: 1.25rem;">
+                  <button type="button" class="btn btn-secondary-modern" id="btn-mail-draft-submit" style="margin-right: 0.5rem;">
+                    Save Draft
+                  </button>
+                  <button type="button" class="btn btn-primary-gradient" id="btn-mail-send-submit">
+                    Send Email
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="calendar-divider"></div>
+
+            <div class="events-list-wrapper">
+              <div class="events-list-header">
+                <h3>Inbox Messages</h3>
+                <span class="events-count" id="mail-count" style="display: none;">0 emails</span>
+              </div>
+              <div class="events-list" id="mail-list">
+                <div class="empty-state-container">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="empty-state-icon">
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="currentColor"/>
+                  </svg>
+                  <p class="muted empty-state-text">Click Search Emails or Ask AI to retrieve messages.</p>
+                </div>
+              </div>
+            </div>
+          </article>
 
         </section>
       </div>
@@ -240,6 +351,69 @@
       <p>Google OAuth POC · FastAPI · Encrypted tokens · Audit logs</p>
     </footer>
   </div>
+
+  <!-- Email Detail modal -->
+  <dialog class="modal" id="modal-mail-detail" style="max-width: 600px;">
+    <div class="modal-content">
+      <h3 id="mail-detail-subject">(No Subject)</h3>
+      
+      <div class="detail-section">
+        <div class="detail-label">From</div>
+        <div class="detail-value" id="mail-detail-from">—</div>
+      </div>
+      
+      <div class="detail-section">
+        <div class="detail-label">To</div>
+        <div class="detail-value" id="mail-detail-to">—</div>
+      </div>
+      
+      <div class="detail-section">
+        <div class="detail-label">Date</div>
+        <div class="detail-value" id="mail-detail-date">—</div>
+      </div>
+      
+      <div class="detail-section">
+        <div class="detail-label">Content</div>
+        <div class="detail-value" id="mail-detail-body" style="white-space: pre-wrap; background: #f8f9fa; padding: 1rem; border-radius: 6px; max-height: 250px; overflow-y: auto; font-family: sans-serif; font-size: 0.9rem; line-height: 1.4; border: 1px solid var(--border);">—</div>
+      </div>
+
+      <!-- Quick Reply Section -->
+      <div class="detail-section" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+        <div class="detail-label">Quick Reply</div>
+        <textarea id="mail-reply-body" class="form-control" rows="3" placeholder="Type a reply... (This creates a draft reply)" style="margin-top: 0.5rem; height: auto; min-height: 70px;"></textarea>
+        <button type="button" class="btn btn-secondary-modern btn-sm" id="btn-mail-reply-submit" style="margin-top: 0.5rem;">
+          Save Draft Reply
+        </button>
+      </div>
+      
+      <div class="modal-actions" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+        <button type="button" class="btn btn-secondary" id="btn-mail-detail-close">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Mail Send Confirmation modal -->
+  <dialog class="modal" id="modal-mail-confirm" style="max-width: 450px;">
+    <div class="modal-content">
+      <h3>Confirm Sending Email</h3>
+      <p class="muted">Are you sure you want to send this email? It will be sent to the recipient immediately.</p>
+      
+      <div class="detail-section" style="margin-top: 1rem;">
+        <div class="detail-label">To</div>
+        <div class="detail-value" id="mail-confirm-to" style="font-weight: 500;">—</div>
+      </div>
+      
+      <div class="detail-section">
+        <div class="detail-label">Subject</div>
+        <div class="detail-value" id="mail-confirm-subject" style="font-weight: 500;">—</div>
+      </div>
+      
+      <div class="modal-actions" style="margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" id="btn-mail-confirm-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary-gradient" id="btn-mail-confirm-send">Confirm & Send</button>
+      </div>
+    </div>
+  </dialog>
 
   <!-- Toast container -->
   <div class="toast-container" id="toast-container" aria-live="polite"></div>
