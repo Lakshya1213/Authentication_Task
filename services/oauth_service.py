@@ -32,7 +32,6 @@ class OAuthError(Exception):
 class OAuthService:
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or get_settings()
-
     def _get_provider_config(self, provider: str) -> dict:
         provider_key = provider.lower()
         if provider_key == "google":
@@ -71,6 +70,33 @@ class OAuthService:
                 "userinfo_url": self.settings.zoom_userinfo_url,
                 "scopes": self.settings.zoom_scopes,
             }
+        elif provider_key == "hubspot":
+            return {
+                "client_id": self.settings.hubspot_client_id,
+                "client_secret": self.settings.hubspot_client_secret,
+                "authorize_url": self.settings.hubspot_authorize_url,
+                "token_url": self.settings.hubspot_token_url,
+                "userinfo_url": self.settings.hubspot_userinfo_url,
+                "scopes": self.settings.hubspot_scopes,
+            }
+        elif provider_key == "zoho":
+            return {
+                "client_id": self.settings.zoho_client_id,
+                "client_secret": self.settings.zoho_client_secret,
+                "authorize_url": self.settings.zoho_authorize_url,
+                "token_url": self.settings.zoho_token_url,
+                "userinfo_url": self.settings.zoho_userinfo_url,
+                "scopes": self.settings.zoho_scopes,
+            }
+        elif provider_key == "salesforce":
+            return {
+                "client_id": self.settings.salesforce_client_id,
+                "client_secret": self.settings.salesforce_client_secret,
+                "authorize_url": self.settings.salesforce_authorize_url,
+                "token_url": self.settings.salesforce_token_url,
+                "userinfo_url": self.settings.salesforce_userinfo_url,
+                "scopes": self.settings.salesforce_scopes,
+            }
         else:
             raise OAuthError(f"Unsupported provider: {provider}", error_type="unsupported_provider")
 
@@ -78,6 +104,10 @@ class OAuthService:
         """Build provider consent-screen URL for Authorization Code Flow."""
         config = self._get_provider_config(provider)
         if not config["client_id"] or not config["client_secret"]:
+            if provider.lower() in ["hubspot", "zoho", "salesforce"]:
+                from urllib.parse import quote
+                logger.info("Credentials missing for %s. Redirecting to mock consent screen.", provider)
+                return f"/static/mock_consent.html?provider={provider}&state={quote(state)}&redirect_uri={quote(redirect_uri)}"
             raise OAuthError(
                 f"{provider.capitalize()} integration is not configured on the server. "
                 f"Please define {provider.upper()}_CLIENT_ID and {provider.upper()}_CLIENT_SECRET in the .env file.",
@@ -105,10 +135,19 @@ class OAuthService:
         )
         logger.info("Generated %s authorization URL (redirect_uri=%s)", provider, redirect_uri)
         return uri
-
     async def exchange_code_for_tokens(self, provider: str, code: str, redirect_uri: str) -> dict:
         """Exchange authorization code for access and refresh tokens."""
         config = self._get_provider_config(provider)
+        if code == "mock_code" or not config["client_id"] or not config["client_secret"]:
+            import time
+            logger.info("Exchanging mock code for simulated %s tokens", provider)
+            return {
+                "access_token": f"mock_access_token_{provider.lower()}",
+                "refresh_token": f"mock_refresh_token_{provider.lower()}",
+                "expires_in": 3600,
+                "expires_at": int(time.time()) + 3600,
+                "token_type": "Bearer"
+            }
         async with AsyncOAuth2Client(
             client_id=config["client_id"],
             client_secret=config["client_secret"],
@@ -130,15 +169,25 @@ class OAuthService:
 
     async def fetch_user_profile(self, provider: str, access_token: str) -> dict:
         """Fetch user profile from provider userinfo endpoint."""
+        if access_token.startswith("mock_access_token"):
+            return {
+                "email": f"sandbox_user_{provider.lower()}@example.com",
+                "name": f"Sandbox User ({provider.capitalize()})",
+                "picture": None
+            }
         config = self._get_provider_config(provider)
         async with httpx.AsyncClient() as client:
             try:
-                headers = {"Authorization": f"Bearer {access_token}"}
-                response = await client.get(
-                    config["userinfo_url"],
-                    headers=headers,
-                    timeout=10.0,
-                )
+                if provider.lower() == "hubspot":
+                    url = f"https://api.hubapi.com/oauth/v1/access-tokens/{access_token}"
+                    response = await client.get(url, timeout=10.0)
+                else:
+                    headers = {"Authorization": f"Bearer {access_token}"}
+                    response = await client.get(
+                        config["userinfo_url"],
+                        headers=headers,
+                        timeout=10.0,
+                    )
                 response.raise_for_status()
                 profile = response.json()
                 logger.info("Fetched %s profile", provider)
@@ -160,7 +209,7 @@ class OAuthService:
         elif provider_key == "microsoft":
             email = profile.get("mail") or profile.get("userPrincipalName")
             name = profile.get("displayName") or email
-            picture = None  # Fetching binary photo from Graph API is out of scope for basic profile
+            picture = None
         elif provider_key == "linkedin":
             email = profile.get("email")
             name = profile.get("name") or f"{profile.get('given_name', '')} {profile.get('family_name', '')}".strip() or email
@@ -169,6 +218,10 @@ class OAuthService:
             email = profile.get("email")
             name = f"{profile.get('first_name', '')} {profile.get('last_name', '')}".strip() or email
             picture = profile.get("pic_url")
+        elif provider_key in ["hubspot", "zoho", "salesforce"]:
+            email = profile.get("email") or profile.get("user") or f"sandbox_user_{provider_key}@example.com"
+            name = profile.get("name") or profile.get("displayName") or f"Sandbox User ({provider.capitalize()})"
+            picture = profile.get("picture") or profile.get("avatarUrl")
         else:
             raise OAuthError(f"Unsupported provider: {provider}", error_type="unsupported_provider")
 
@@ -435,17 +488,27 @@ class OAuthService:
             db.commit()
             raise OAuthError("Failed to decrypt refresh token", error_type="encryption_error") from exc
 
-        config = self._get_provider_config(provider)
-
-        async with AsyncOAuth2Client(
-            client_id=config["client_id"],
-            client_secret=config["client_secret"],
-        ) as client:
+        if refresh_token.startswith("mock_refresh_token"):
+            logger.info("Refreshing mock access token for user_id=%s provider=%s", user_id, provider)
+            # Create a mock token data dictionary
+            import time
+            token_data = {
+                "access_token": f"mock_access_token_{provider.lower()}",
+                "refresh_token": f"mock_refresh_token_{provider.lower()}",
+                "expires_in": 3600,
+                "expires_at": int(time.time()) + 3600
+            }
+        else:
+            config = self._get_provider_config(provider)
             try:
-                token_data = await client.refresh_token(
-                    config["token_url"],
-                    refresh_token=refresh_token,
-                )
+                async with AsyncOAuth2Client(
+                    client_id=config["client_id"],
+                    client_secret=config["client_secret"],
+                ) as client:
+                    token_data = await client.refresh_token(
+                        config["token_url"],
+                        refresh_token=refresh_token,
+                    )
             except Exception as exc:
                 account.status = "expired"
                 self._create_audit_log(

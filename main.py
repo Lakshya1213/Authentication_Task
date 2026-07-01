@@ -19,6 +19,7 @@ from db.database import init_db
 from routes.auth import router as auth_router
 from routes.calendar import router as calendar_router
 from routes.mail import router as mail_router
+from routes.crm import router as crm_router
 from schemas.auth_schema import ErrorResponse
 
 settings = get_settings()
@@ -55,6 +56,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(calendar_router)
 app.include_router(mail_router)
+app.include_router(crm_router)
 
 if STATIC_DIR.is_dir():
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

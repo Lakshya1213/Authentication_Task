@@ -54,6 +54,31 @@ class Settings(BaseSettings):
     zoom_scopes: str = "user:read:user"
     zoom_redirect_uri: str | None = None
 
+    # HubSpot settings
+    hubspot_client_id: str | None = None
+    hubspot_client_secret: str | None = None
+    hubspot_access_token: str | None = None
+    hubspot_authorize_url: str = "https://app.hubspot.com/oauth/authorize"
+    hubspot_token_url: str = "https://api.hubapi.com/oauth/v1/token"
+    hubspot_userinfo_url: str = "https://api.hubapi.com/oauth/v1/access-tokens"
+    hubspot_scopes: str = "crm.objects.contacts.read crm.objects.contacts.write crm.objects.companies.read crm.objects.companies.write crm.objects.deals.read crm.objects.deals.write"
+
+    # Zoho settings
+    zoho_client_id: str | None = None
+    zoho_client_secret: str | None = None
+    zoho_authorize_url: str = "https://accounts.zoho.com/oauth/v2/auth"
+    zoho_token_url: str = "https://accounts.zoho.com/oauth/v2/token"
+    zoho_userinfo_url: str = "https://accounts.zoho.com/oauth/user/info"
+    zoho_scopes: str = "ZohoCRM.modules.ALL,ZohoCRM.users.READ"
+
+    # Salesforce settings
+    salesforce_client_id: str | None = None
+    salesforce_client_secret: str | None = None
+    salesforce_authorize_url: str = "https://login.salesforce.com/services/oauth2/authorize"
+    salesforce_token_url: str = "https://login.salesforce.com/services/oauth2/token"
+    salesforce_userinfo_url: str = "https://login.salesforce.com/services/oauth2/userinfo"
+    salesforce_scopes: str = "openid api refresh_token"
+
     # Google OAuth endpoints (OpenID Connect discovery)
     google_authorize_url: str = "https://accounts.google.com/o/oauth2/v2/auth"
     google_token_url: str = "https://oauth2.googleapis.com/token"

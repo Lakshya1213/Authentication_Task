@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulated CRM Authorization Sandbox</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --panel-bg: #1e293b;
+      --text-color: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #f97316; /* HubSpot Orange */
+      --primary-hover: #ea580c;
+      --border: #334155;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+    }
+
+    .card {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      max-width: 500px;
+      width: 100%;
+      padding: 2.5rem;
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      background-color: #ff7a5920;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-box.salesforce {
+      background-color: #00a4ef20;
+      color: #00a4ef;
+    }
+
+    .icon-box.zoho {
+      background-color: #15c26b20;
+      color: #15c26b;
+    }
+
+    .brand-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .brand-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .warning-banner {
+      background-color: rgba(249, 115, 22, 0.1);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      font-size: 0.875rem;
+      color: #fdba74;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .scope-list {
+      margin-bottom: 2rem;
+    }
+
+    .scope-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .scope-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .scope-item:last-child {
+      border-bottom: none;
+    }
+
+    .scope-check {
+      color: #10b981;
+      font-weight: bold;
+      margin-top: 0.125rem;
+    }
+
+    .scope-desc {
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    .scope-name {
+      font-weight: 600;
+      display: block;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 0.5rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-color);
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="brand-group">
+      <div class="icon-box" id="provider-icon">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1 14.5h-2v-2h2v2zm0-4.5h-2V7h2v5z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title" id="provider-title">CRM Consent Screen</h1>
+        <p class="brand-subtitle">Simulated Developer Authorization</p>
+      </div>
+    </div>
+
+    <div class="warning-banner">
+      <strong>Developer Sandbox Mode:</strong> Real client credentials for this provider are not configured in your <code>.env</code> file. Approving this screen will grant a simulated token, enabling you to test the full CRM feature-set against a local mock database.
+    </div>
+
+    <div class="scope-list">
+      <h2 class="scope-title">Permissions Requested</h2>
+      <div class="scope-item">
+        <span class="scope-check">✓</span>
+        <div>
+          <span class="scope-desc">Read customer contacts, accounts, and opportunities</span>
+          <span class="scope-name" id="scope-read">crm.objects.contacts.read</span>
+        </div>
+      </div>
+      <div class="scope-item">
+        <span class="scope-check">✓</span>
+        <div>
+          <span class="scope-desc">Create follow-up tasks and notes on records</span>
+          <span class="scope-name" id="scope-write">crm.objects.contacts.write</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="deny()">Cancel</button>
+      <button class="btn btn-primary" id="btn-approve" onclick="approve()">Approve Sandbox</button>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const provider = (urlParams.get('provider') || 'hubspot').toLowerCase();
+    const state = urlParams.get('state') || '';
+    const redirectUri = urlParams.get('redirect_uri') || '';
+
+    // Customize UI based on provider
+    const providerTitle = document.getElementById('provider-title');
+    const providerIcon = document.getElementById('provider-icon');
+    const scopeRead = document.getElementById('scope-read');
+    const scopeWrite = document.getElementById('scope-write');
+    const btnApprove = document.getElementById('btn-approve');
+
+    if (provider === 'hubspot') {
+      providerTitle.innerText = 'HubSpot Sandbox';
+      document.documentElement.style.setProperty('--primary', '#f97316');
+      document.documentElement.style.setProperty('--primary-hover', '#ea580c');
+      scopeRead.innerText = 'crm.objects.contacts.read crm.objects.companies.read crm.objects.deals.read';
+      scopeWrite.innerText = 'crm.objects.contacts.write crm.objects.companies.write crm.objects.deals.write';
+      providerIcon.innerHTML = `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M18.8 10.4c-.6 0-1.2.2-1.6.6l-2.6-1.5c.1-.3.2-.6.2-.9 0-1.8-1.5-3.3-3.3-3.3S8.2 6.8 8.2 8.6c0 .4.1.7.2 1l-2.1 2.1c-.3-.1-.6-.2-.9-.2-1.8 0-3.3 1.5-3.3 3.3s1.5 3.3 3.3 3.3 3.3-1.5 3.3-3.3c0-.4-.1-.7-.2-1l2.1-2.1c.3.1.6.2.9.2 1 0 1.9-.5 2.5-1.2l2.6 1.5c-.1.3-.2.6-.2.9 0 1.8 1.5 3.3 3.3 3.3s3.3-1.5 3.3-3.3-1.4-3.3-3.2-3.3zm-13.4 6c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5 1.5.7 1.5 1.5-.7 1.5-1.5 1.5zm6.1-9c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5-1.5-.7-1.5-1.5.7-1.5 1.5-1.5zm7.3 9c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5 1.5.7 1.5 1.5-.7 1.5-1.5 1.5z"/>
+        </svg>
+      `;
+    } else if (provider === 'salesforce') {
+      providerTitle.innerText = 'Salesforce Connected App';
+      document.documentElement.style.setProperty('--primary', '#00a4ef');
+      document.documentElement.style.setProperty('--primary-hover', '#0085c4');
+      scopeRead.innerText = 'openid api';
+      scopeWrite.innerText = 'refresh_token';
+      providerIcon.className = 'icon-box salesforce';
+      providerIcon.innerHTML = `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M19.167 11.25a3.75 3.75 0 0 0-7.25-1 3.5 3.5 0 0 0-6.167.75 4 4 0 0 0 .25 7.5h13a3.5 3.5 0 0 0 .167-7.25z"/>
+        </svg>
+      `;
+    } else if (provider === 'zoho') {
+      providerTitle.innerText = 'Zoho CRM Developer Console';
+      document.documentElement.style.setProperty('--primary', '#15c26b');
+      document.documentElement.style.setProperty('--primary-hover', '#0f9a52');
+      scopeRead.innerText = 'ZohoCRM.modules.contacts.READ ZohoCRM.modules.accounts.READ ZohoCRM.modules.deals.READ';
+      scopeWrite.innerText = 'ZohoCRM.modules.tasks.CREATE ZohoCRM.modules.notes.CREATE';
+      providerIcon.className = 'icon-box zoho';
+      providerIcon.innerHTML = `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+        </svg>
+      `;
+    }
+
+    function approve() {
+      if (redirectUri) {
+        window.location.href = `${redirectUri}?code=mock_code&state=${state}`;
+      } else {
+        alert('Missing redirect_uri');
+      }
+    }
+
+    function deny() {
+      if (redirectUri) {
+        window.location.href = `${redirectUri}?error=access_denied&state=${state}`;
+      } else {
+        window.location.href = '/';
+      }
+    }
+  </script>
+</body>
+</html>

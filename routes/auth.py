@@ -227,6 +227,28 @@ def list_connected_apps(
 ) -> list[ConnectedAppResponse]:
     """Return connected OAuth providers and their status for the current user."""
     user_id = get_current_user_id(request)
+    
+    # Auto-connect HubSpot if static service key is defined in settings
+    from config import get_settings
+    settings = get_settings()
+    if settings.hubspot_access_token:
+        from models.connected_account import ConnectedAccount
+        existing = db.query(ConnectedAccount).filter(
+            ConnectedAccount.user_id == user_id,
+            ConnectedAccount.provider == "hubspot"
+        ).one_or_none()
+        if not existing or existing.status != "connected":
+            from models.user import User
+            user = db.query(User).filter(User.id == user_id).one_or_none()
+            if user:
+                token_data = {
+                    "access_token": settings.hubspot_access_token,
+                    "refresh_token": None,
+                    "expires_in": 315360000  # 10 years
+                }
+                service.upsert_connected_account_and_tokens(db, "hubspot", user, token_data)
+                db.commit()
+                
     accounts = service.list_connected_apps(db, user_id)
 
     return [

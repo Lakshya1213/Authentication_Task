@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from db.database import SessionLocal
 from services.calendar_service import get_calendar_service
 from services.mail_service import get_mail_service
+from services.crm_service import get_crm_service
 from services.oauth_service import OAuthError
 
 # Configure minimal logging to stderr (stdio transport requires stdout to be pure JSON-RPC)
@@ -26,6 +27,7 @@ logger = logging.getLogger("mcp_calendar_server")
 mcp = FastMCP("Google Workspace Mail & Calendar Server")
 calendar_service = get_calendar_service()
 mail_service = get_mail_service()
+crm_service = get_crm_service()
 
 
 def get_db_session() -> Session:
@@ -412,6 +414,214 @@ async def reply_to_message(
             "error_type": "internal_error",
             "message": str(exc)
         }, indent=2)
+    finally:
+        db.close()
+
+
+# --- CRM Tools ---
+
+@mcp.tool(name="crm.search_contacts")
+async def search_contacts(
+    query: str,
+    provider: str | None = None,
+    user_id: int = 1
+) -> str:
+    """
+    Search contacts across connected CRM platforms.
+    
+    Args:
+        query: Name, email, or details to search for
+        provider: Optional CRM provider ('hubspot', 'salesforce', or 'zoho')
+        user_id: The database ID of the user (defaults to 1)
+    """
+    logger.info("MCP Tool search_contacts called query=%s, provider=%s, user_id=%s", query, provider, user_id)
+    db = get_db_session()
+    try:
+        res = await crm_service.search_contacts(db, user_id=user_id, query=query, provider=provider)
+        return json.dumps(res, indent=2)
+    except Exception as exc:
+        logger.exception("Error in search_contacts tool")
+        return json.dumps({"status": "failed", "error": str(exc)}, indent=2)
+    finally:
+        db.close()
+
+
+@mcp.tool(name="crm.get_contact")
+async def get_contact(
+    provider: str,
+    contact_id: str,
+    user_id: int = 1
+) -> str:
+    """
+    Fetch full contact details including notes and tasks from a connected CRM.
+    
+    Args:
+        provider: The CRM provider ('hubspot', 'salesforce', or 'zoho')
+        contact_id: The unique CRM identifier of the contact
+        user_id: The database ID of the user (defaults to 1)
+    """
+    logger.info("MCP Tool get_contact called provider=%s, contact_id=%s, user_id=%s", provider, contact_id, user_id)
+    db = get_db_session()
+    try:
+        res = await crm_service.get_contact(db, user_id=user_id, provider=provider, contact_id=contact_id)
+        return json.dumps(res, indent=2)
+    except Exception as exc:
+        logger.exception("Error in get_contact tool")
+        return json.dumps({"status": "failed", "error": str(exc)}, indent=2)
+    finally:
+        db.close()
+
+
+@mcp.tool(name="crm.search_accounts")
+async def search_accounts(
+    query: str,
+    provider: str | None = None,
+    user_id: int = 1
+) -> str:
+    """
+    Search accounts/companies across connected CRM platforms.
+    
+    Args:
+        query: Company name or domain to search for
+        provider: Optional CRM provider ('hubspot', 'salesforce', or 'zoho')
+        user_id: The database ID of the user (defaults to 1)
+    """
+    logger.info("MCP Tool search_accounts called query=%s, provider=%s, user_id=%s", query, provider, user_id)
+    db = get_db_session()
+    try:
+        res = await crm_service.search_accounts(db, user_id=user_id, query=query, provider=provider)
+        return json.dumps(res, indent=2)
+    except Exception as exc:
+        logger.exception("Error in search_accounts tool")
+        return json.dumps({"status": "failed", "error": str(exc)}, indent=2)
+    finally:
+        db.close()
+
+
+@mcp.tool(name="crm.search_deals")
+async def search_deals(
+    query: str,
+    provider: str | None = None,
+    user_id: int = 1
+) -> str:
+    """
+    Search deals/opportunities across connected CRM platforms.
+    
+    Args:
+        query: Deal name or stage to search for
+        provider: Optional CRM provider ('hubspot', 'salesforce', or 'zoho')
+        user_id: The database ID of the user (defaults to 1)
+    """
+    logger.info("MCP Tool search_deals called query=%s, provider=%s, user_id=%s", query, provider, user_id)
+    db = get_db_session()
+    try:
+        res = await crm_service.search_deals(db, user_id=user_id, query=query, provider=provider)
+        return json.dumps(res, indent=2)
+    except Exception as exc:
+        logger.exception("Error in search_deals tool")
+        return json.dumps({"status": "failed", "error": str(exc)}, indent=2)
+    finally:
+        db.close()
+
+
+@mcp.tool(name="crm.create_note")
+async def create_note(
+    provider: str,
+    entity_type: str,
+    entity_id: str,
+    note_text: str,
+    user_id: int = 1
+) -> str:
+    """
+    Add a note to a contact, account, or deal.
+    
+    Args:
+        provider: The CRM provider ('hubspot', 'salesforce', or 'zoho')
+        entity_type: The object type ('contact', 'account', or 'deal')
+        entity_id: The unique CRM identifier of the entity
+        note_text: The content of the note
+        user_id: The database ID of the user (defaults to 1)
+    """
+    logger.info("MCP Tool create_note called provider=%s, entity=%s, user_id=%s", provider, entity_type, user_id)
+    db = get_db_session()
+    try:
+        res = await crm_service.create_note(
+            db, user_id=user_id, provider=provider, entity_type=entity_type, entity_id=entity_id, note_text=note_text
+        )
+        return json.dumps(res, indent=2)
+    except Exception as exc:
+        logger.exception("Error in create_note tool")
+        return json.dumps({"status": "failed", "error": str(exc)}, indent=2)
+    finally:
+        db.close()
+
+
+@mcp.tool(name="crm.create_task")
+async def create_task(
+    provider: str,
+    entity_type: str,
+    entity_id: str,
+    task_title: str,
+    due_date: str | None = None,
+    owner: str | None = None,
+    user_id: int = 1
+) -> str:
+    """
+    Create a follow-up task on a contact, account, or deal.
+    
+    Args:
+        provider: The CRM provider ('hubspot', 'salesforce', or 'zoho')
+        entity_type: The object type ('contact', 'account', or 'deal')
+        entity_id: The unique CRM identifier of the entity
+        task_title: The title/description of the task
+        due_date: Optional ISO 8601 string for due date (e.g., '2026-07-15T12:00:00Z')
+        owner: Optional name of the task owner/assignee
+        user_id: The database ID of the user (defaults to 1)
+    """
+    logger.info("MCP Tool create_task called provider=%s, entity=%s, title=%s, user_id=%s", provider, entity_type, task_title, user_id)
+    db = get_db_session()
+    try:
+        res = await crm_service.create_task(
+            db, user_id=user_id, provider=provider, entity_type=entity_type, entity_id=entity_id,
+            task_title=task_title, due_date=due_date, owner=owner
+        )
+        return json.dumps(res, indent=2)
+    except Exception as exc:
+        logger.exception("Error in create_task tool")
+        return json.dumps({"status": "failed", "error": str(exc)}, indent=2)
+    finally:
+        db.close()
+
+
+@mcp.tool(name="crm.propose_deal_update")
+async def propose_deal_update(
+    provider: str,
+    deal_id: str,
+    proposed_changes: str,  # Pass proposed changes as a JSON string to allow flexible properties
+    reason: str | None = None,
+    user_id: int = 1
+) -> str:
+    """
+    Propose a deal update (e.g. stage, amount) without directly editing CRM. Returns a pending proposal.
+    
+    Args:
+        provider: The CRM provider ('hubspot', 'salesforce', or 'zoho')
+        deal_id: The unique CRM identifier of the deal
+        proposed_changes: JSON string representing changes, e.g. '{"stage": "Negotiation", "amount": 90000}'
+        reason: The rationale/reason for the proposal
+        user_id: The database ID of the user (defaults to 1)
+    """
+    logger.info("MCP Tool propose_deal_update called provider=%s, deal_id=%s, user_id=%s", provider, deal_id, user_id)
+    db = get_db_session()
+    try:
+        changes = json.loads(proposed_changes)
+        res = await crm_service.propose_deal_update(
+            db, user_id=user_id, provider=provider, deal_id=deal_id, proposed_changes=changes, reason=reason
+        )
+        return json.dumps(res, indent=2)
+    except Exception as exc:
+        logger.exception("Error in propose_deal_update tool")
+        return json.dumps({"status": "failed", "error": str(exc)}, indent=2)
     finally:
         db.close()
 
