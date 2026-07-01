@@ -93,6 +93,10 @@ class Settings(BaseSettings):
     app_name: str = "Google OAuth POC"
     debug: bool = True
 
+    # Groq settings for transcript agent
+    groq_api_key: str | None = None
+    groq_model: str = "openai/gpt-oss-120b"
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -368,6 +368,14 @@
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="tab-icon" style="width:16px; height:16px; margin-right:4px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/></svg>
                 Deal Update Proposals
               </button>
+              <button type="button" class="tab-btn" id="tab-btn-crm-transcript">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="tab-icon" style="width:16px; height:16px; margin-right:4px;">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" fill="currentColor"/>
+                  <path d="M19 10v1a7 7 0 0 1-14 0v-1h2v1a5 5 0 0 0 10 0v-1h2z" fill="currentColor"/>
+                  <rect x="11" y="18" width="2" height="4" fill="currentColor"/>
+                </svg>
+                Transcript Agent
+              </button>
             </div>
 
             <!-- CRM Search Section -->
@@ -441,6 +449,112 @@
                 </div>
                 <div id="crm-proposals-list" class="events-list" style="max-height: 400px; overflow-y: auto;">
                   <p class="muted empty-state" style="padding: 2rem; text-align: center;">No proposals created yet.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- CRM Transcript Agent Section -->
+            <div id="section-crm-transcript" hidden>
+              <div class="calendar-form-container" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                <h3 style="margin-bottom: 1rem; color: var(--text);">Sales transcript CRM analyzer</h3>
+                <div class="form-grid">
+                  <div class="form-group" style="grid-column: span 1;">
+                    <label for="crm-transcript-deal-id">HubSpot Deal ID</label>
+                    <input type="text" id="crm-transcript-deal-id" class="form-control" placeholder="E.g., 511082352841" />
+                  </div>
+                  <div class="form-group" style="grid-column: span 1;">
+                    <label for="crm-transcript-provider-select">CRM Provider</label>
+                    <select id="crm-transcript-provider-select" class="form-control">
+                      <option value="hubspot">HubSpot</option>
+                      <option value="zoho">Zoho</option>
+                      <option value="salesforce">Salesforce</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="grid-column: span 2;">
+                    <label for="crm-transcript-text">Sales Call Transcript</label>
+                    <textarea id="crm-transcript-text" class="form-control" rows="8" placeholder="Paste the sales call transcript here..." style="font-family: monospace; font-size: 0.85rem; line-height: 1.4; resize: vertical;"></textarea>
+                  </div>
+                </div>
+                
+                <div class="calendar-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+                  <button type="button" class="btn btn-primary-gradient" id="btn-crm-transcript-analyze">
+                    Analyze Transcript
+                  </button>
+                </div>
+              </div>
+
+              <!-- Collapsible Discovered Details -->
+              <div id="crm-transcript-discovered-wrapper" hidden style="margin-bottom: 1.5rem;">
+                <details style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; font-size: 0.85rem;">
+                  <summary style="cursor: pointer; font-weight: 600; color: var(--text-muted);">Discovered MCP Tools & Properties</summary>
+                  <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div>
+                      <strong>Writable Properties Discovered:</strong>
+                      <div id="crm-transcript-discovered-properties" style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.25rem;"></div>
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                      <strong>MCP Tools Available:</strong>
+                      <div id="crm-transcript-discovered-tools" style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.25rem;"></div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              <!-- Proposed Changes Section -->
+              <div id="crm-transcript-proposals-wrapper" hidden class="events-list-wrapper" style="margin-bottom: 1.5rem;">
+                <div class="events-list-header">
+                  <h3>Proposed CRM updates</h3>
+                </div>
+                <div style="overflow-x: auto; background: rgba(0,0,0,0.1); border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1rem;">
+                  <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                    <thead>
+                      <tr style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);">
+                        <th style="padding: 0.75rem;">Change Type</th>
+                        <th style="padding: 0.75rem;">Object</th>
+                        <th style="padding: 0.75rem;">Field/Action</th>
+                        <th style="padding: 0.75rem;">Current Value</th>
+                        <th style="padding: 0.75rem;">Proposed Value</th>
+                        <th style="padding: 0.75rem;">Reason</th>
+                        <th style="padding: 0.75rem;">Evidence</th>
+                        <th style="padding: 0.75rem; text-align: center;">Approve?</th>
+                      </tr>
+                    </thead>
+                    <tbody id="crm-transcript-proposals-table-body">
+                      <!-- Rendered dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+
+                <div id="crm-transcript-skipped-wrapper" style="margin-bottom: 1.5rem;" hidden>
+                  <details style="background: rgba(255,255,255,0.01); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem; font-size: 0.8rem;">
+                    <summary style="cursor: pointer; color: var(--text-muted);">Skipped Candidates (<span id="crm-transcript-skipped-count">0</span>)</summary>
+                    <ul id="crm-transcript-skipped-list" style="margin-top: 0.5rem; padding-left: 1.25rem; line-height: 1.4;"></ul>
+                  </details>
+                </div>
+
+                <div class="calendar-actions" style="display: flex; justify-content: flex-end;">
+                  <button type="button" class="btn btn-primary-gradient" id="btn-crm-transcript-apply">
+                    Apply Approved Updates
+                  </button>
+                </div>
+              </div>
+
+              <!-- Final Run Summary -->
+              <div id="crm-transcript-summary-wrapper" hidden style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem;">
+                <h4 style="color: #10b981; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px;">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Updates applied successfully
+                </h4>
+                <div style="font-size: 0.85rem; line-height: 1.5;">
+                  <strong>Executed Changes:</strong>
+                  <ul id="crm-transcript-summary-executed" style="margin-top: 0.25rem; padding-left: 1.25rem; color: var(--text-muted);"></ul>
+                  
+                  <div id="crm-transcript-summary-failed-container" style="margin-top: 0.75rem;" hidden>
+                    <strong style="color: #ef4444;">Failed Operations:</strong>
+                    <ul id="crm-transcript-summary-failed" style="margin-top: 0.25rem; padding-left: 1.25rem; color: #ef4444;"></ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -905,6 +1019,6 @@
     </div>
   </dialog>
 
-  <script src="/static/js/app.js?v=1.6" type="module"></script>
+  <script src="/static/js/app.js?v=1.7" type="module"></script>
 </body>
 </html>

@@ -175,6 +175,27 @@ const els = {
   crmCreateDealName: $("crm-create-deal-name"),
   crmCreateDealStage: $("crm-create-deal-stage"),
   crmCreateDealAmount: $("crm-create-deal-amount"),
+
+  // Transcript Agent elements
+  tabBtnCrmTranscript: $("tab-btn-crm-transcript"),
+  sectionCrmTranscript: $("section-crm-transcript"),
+  crmTranscriptDealId: $("crm-transcript-deal-id"),
+  crmTranscriptProviderSelect: $("crm-transcript-provider-select"),
+  crmTranscriptText: $("crm-transcript-text"),
+  btnCrmTranscriptAnalyze: $("btn-crm-transcript-analyze"),
+  crmTranscriptDiscoveredWrapper: $("crm-transcript-discovered-wrapper"),
+  crmTranscriptDiscoveredProperties: $("crm-transcript-discovered-properties"),
+  crmTranscriptDiscoveredTools: $("crm-transcript-discovered-tools"),
+  crmTranscriptProposalsWrapper: $("crm-transcript-proposals-wrapper"),
+  crmTranscriptProposalsTableBody: $("crm-transcript-proposals-table-body"),
+  crmTranscriptSkippedWrapper: $("crm-transcript-skipped-wrapper"),
+  crmTranscriptSkippedCount: $("crm-transcript-skipped-count"),
+  crmTranscriptSkippedList: $("crm-transcript-skipped-list"),
+  btnCrmTranscriptApply: $("btn-crm-transcript-apply"),
+  crmTranscriptSummaryWrapper: $("crm-transcript-summary-wrapper"),
+  crmTranscriptSummaryExecuted: $("crm-transcript-summary-executed"),
+  crmTranscriptSummaryFailedContainer: $("crm-transcript-summary-failed-container"),
+  crmTranscriptSummaryFailed: $("crm-transcript-summary-failed"),
 };
 
 /** @type {object|null} */
@@ -1029,16 +1050,29 @@ function bindEvents() {
   els.tabBtnCrmSearch.addEventListener("click", () => {
     els.tabBtnCrmSearch.classList.add("active");
     els.tabBtnCrmProposals.classList.remove("active");
+    els.tabBtnCrmTranscript.classList.remove("active");
     els.sectionCrmSearch.hidden = false;
     els.sectionCrmProposals.hidden = true;
+    els.sectionCrmTranscript.hidden = true;
   });
 
   els.tabBtnCrmProposals.addEventListener("click", () => {
     els.tabBtnCrmProposals.classList.add("active");
     els.tabBtnCrmSearch.classList.remove("active");
+    els.tabBtnCrmTranscript.classList.remove("active");
     els.sectionCrmProposals.hidden = false;
     els.sectionCrmSearch.hidden = true;
+    els.sectionCrmTranscript.hidden = true;
     loadCRMProposals();
+  });
+
+  els.tabBtnCrmTranscript.addEventListener("click", () => {
+    els.tabBtnCrmTranscript.classList.add("active");
+    els.tabBtnCrmSearch.classList.remove("active");
+    els.tabBtnCrmProposals.classList.remove("active");
+    els.sectionCrmTranscript.hidden = false;
+    els.sectionCrmSearch.hidden = true;
+    els.sectionCrmProposals.hidden = true;
   });
 
   els.btnRefreshProposals.addEventListener("click", loadCRMProposals);
@@ -1107,6 +1141,10 @@ function bindEvents() {
   });
 
   els.btnCrmCreateSubmit.addEventListener("click", submitCRMRecordCreation);
+
+  // B2B Transcript Agent buttons
+  els.btnCrmTranscriptAnalyze.addEventListener("click", runTranscriptAgentAnalysis);
+  els.btnCrmTranscriptApply.addEventListener("click", applyApprovedTranscriptChanges);
 }
 
 let currentCRMEntity = null; // Store currently viewed CRM entity details
@@ -1533,6 +1571,152 @@ async function submitCRMRecordCreation() {
     showToast(`Creation failed: ${err.message}`, "error");
   } finally {
     els.btnCrmCreateSubmit.disabled = false;
+  }
+}
+
+let currentTranscriptProposals = []; // In-memory cache of proposed updates
+
+async function runTranscriptAgentAnalysis() {
+  const dealId = els.crmTranscriptDealId.value.trim();
+  const provider = els.crmTranscriptProviderSelect.value;
+  const transcript = els.crmTranscriptText.value.trim();
+
+  if (!dealId || !transcript) {
+    showToast("Please enter a Deal ID and paste a sales call transcript.", "error");
+    return;
+  }
+
+  els.btnCrmTranscriptAnalyze.disabled = true;
+  els.btnCrmTranscriptAnalyze.textContent = "Analyzing Transcript...";
+  
+  // Hide previous wrappers
+  els.crmTranscriptDiscoveredWrapper.hidden = true;
+  els.crmTranscriptProposalsWrapper.hidden = true;
+  els.crmTranscriptSummaryWrapper.hidden = true;
+
+  try {
+    const data = await api("/hubspot-transcript-agent/run", {
+      method: "POST",
+      body: JSON.stringify({ deal_id: dealId, transcript, provider })
+    });
+
+    // 1. Render Discovered Tools and Properties
+    els.crmTranscriptDiscoveredProperties.innerHTML = "";
+    els.crmTranscriptDiscoveredTools.innerHTML = "";
+
+    const dealProps = data.discovered_properties.deals || [];
+    dealProps.slice(0, 15).forEach(p => {
+      els.crmTranscriptDiscoveredProperties.innerHTML += `<span class="badge badge-success" style="font-size:0.7rem; margin-right:0.25rem; margin-bottom:0.25rem;">${escapeHtml(p.label)} (${escapeHtml(p.name)})</span>`;
+    });
+    if (dealProps.length > 15) {
+      els.crmTranscriptDiscoveredProperties.innerHTML += `<span class="badge badge-secondary" style="font-size:0.7rem;">+${dealProps.length - 15} more</span>`;
+    }
+
+    const tools = data.discovered_tools || [];
+    tools.forEach(t => {
+      els.crmTranscriptDiscoveredTools.innerHTML += `<span class="badge badge-primary" style="font-size:0.7rem; margin-right:0.25rem; margin-bottom:0.25rem;">${escapeHtml(t.name)}</span>`;
+    });
+
+    els.crmTranscriptDiscoveredWrapper.hidden = false;
+
+    // 2. Render Proposed Changes
+    currentTranscriptProposals = data.proposed_changes || [];
+    if (currentTranscriptProposals.length === 0) {
+      els.crmTranscriptProposalsTableBody.innerHTML = `<tr><td colspan="8" class="muted" style="text-align:center; padding:1.5rem;">No updates proposed from this transcript.</td></tr>`;
+    } else {
+      els.crmTranscriptProposalsTableBody.innerHTML = currentTranscriptProposals.map((c, idx) => `
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding: 0.75rem;"><span class="badge badge-primary" style="font-size: 0.75rem;">${escapeHtml(c.action_type)}</span></td>
+          <td style="padding: 0.75rem; text-transform: capitalize;">${escapeHtml(c.object_type)}</td>
+          <td style="padding: 0.75rem; font-family: monospace;">${escapeHtml(c.property_name || "create_activity")}</td>
+          <td style="padding: 0.75rem; color: var(--text-muted); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(String(c.current_value || "Empty"))}</td>
+          <td style="padding: 0.75rem; font-weight: 600; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(String(c.proposed_value || c.tool_payload.task_title || "Create Record"))}</td>
+          <td style="padding: 0.75rem; max-width: 150px; font-size: 0.8rem; line-height: 1.3;">${escapeHtml(c.reason)}</td>
+          <td style="padding: 0.75rem; max-width: 150px; font-style: italic; color: #fbbf24; font-size: 0.8rem; line-height: 1.3;">"${escapeHtml(c.evidence_text)}"</td>
+          <td style="padding: 0.75rem; text-align: center;">
+            <input type="checkbox" id="chk-transcript-prop-${idx}" checked style="width: 16px; height: 16px; cursor: pointer;" />
+          </td>
+        </tr>
+      `).join('');
+    }
+    
+    // 3. Render Skipped Candidates
+    const skipped = data.skipped_candidates || [];
+    els.crmTranscriptSkippedCount.textContent = skipped.length;
+    if (skipped.length === 0) {
+      els.crmTranscriptSkippedWrapper.hidden = true;
+    } else {
+      els.crmTranscriptSkippedList.innerHTML = skipped.map(s => `
+        <li style="margin-bottom:0.25rem;">
+          <strong style="color: var(--text-muted);">${escapeHtml(s.candidate.property_label || s.candidate.title || "Record")}</strong>: 
+          ${escapeHtml(s.reason)}
+        </li>
+      `).join('');
+      els.crmTranscriptSkippedWrapper.hidden = false;
+    }
+
+    els.crmTranscriptProposalsWrapper.hidden = false;
+    showToast("Transcript analyzed successfully!");
+  } catch (err) {
+    showToast(`Analysis failed: ${err.message}`, "error");
+  } finally {
+    els.btnCrmTranscriptAnalyze.disabled = false;
+    els.btnCrmTranscriptAnalyze.textContent = "Analyze Transcript";
+  }
+}
+
+async function applyApprovedTranscriptChanges() {
+  const provider = els.crmTranscriptProviderSelect.value;
+  const approved = [];
+  
+  currentTranscriptProposals.forEach((c, idx) => {
+    const chk = document.getElementById(`chk-transcript-prop-${idx}`);
+    if (chk && chk.checked) {
+      approved.push(c);
+    }
+  });
+
+  if (approved.length === 0) {
+    showToast("Please approve at least one change before applying.", "error");
+    return;
+  }
+
+  els.btnCrmTranscriptApply.disabled = true;
+  els.btnCrmTranscriptApply.textContent = "Applying Updates...";
+
+  try {
+    const res = await api("/hubspot-transcript-agent/apply", {
+      method: "POST",
+      body: JSON.stringify({ approved_changes: approved, provider })
+    });
+
+    // Render Executed Summary
+    els.crmTranscriptSummaryExecuted.innerHTML = res.executed.map(e => `
+      <li style="margin-bottom:0.25rem;">${escapeHtml(e)}</li>
+    `).join('');
+    if (res.executed.length === 0) {
+      els.crmTranscriptSummaryExecuted.innerHTML = `<li>No changes were applied.</li>`;
+    }
+
+    // Render Failed Summary
+    if (res.failed && res.failed.length > 0) {
+      els.crmTranscriptSummaryFailed.innerHTML = res.failed.map(f => `
+        <li style="margin-bottom:0.25rem;">${escapeHtml(f)}</li>
+      `).join('');
+      els.crmTranscriptSummaryFailedContainer.hidden = false;
+    } else {
+      els.crmTranscriptSummaryFailedContainer.hidden = true;
+    }
+
+    els.crmTranscriptSummaryWrapper.hidden = false;
+    els.crmTranscriptProposalsWrapper.hidden = true;
+    
+    showToast("CRM updates completed!");
+  } catch (err) {
+    showToast(`Application failed: ${err.message}`, "error");
+  } finally {
+    els.btnCrmTranscriptApply.disabled = false;
+    els.btnCrmTranscriptApply.textContent = "Apply Approved Updates";
   }
 }
 

@@ -21,6 +21,7 @@ from routes.calendar import router as calendar_router
 from routes.mail import router as mail_router
 from routes.crm import router as crm_router
 from schemas.auth_schema import ErrorResponse
+from transcript_agent.routes import router as transcript_router
 
 settings = get_settings()
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -57,6 +58,7 @@ app.include_router(auth_router)
 app.include_router(calendar_router)
 app.include_router(mail_router)
 app.include_router(crm_router)
+app.include_router(transcript_router)
 
 if STATIC_DIR.is_dir():
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
